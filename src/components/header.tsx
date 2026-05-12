@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, Box, Flex, Text, Button } from "@radix-ui/themes";
+import { Avatar, Box, Flex, Text, Button, Heading } from "@radix-ui/themes";
 import { useContext } from "react";
 import { UserContext } from "./context/user-context";
 
@@ -76,22 +76,7 @@ export default function Header() {
     </div>
 
     {/* Logout Button */}
-    <h1
-      size="3"
-      radius="full"
-      className="group cursor-pointer overflow-hidden rounded-3xl border border-red-200 bg-gradient-to-r from-red-500 to-rose-500 px-5 py-3 font-semibold text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl"
-    >
-      <Flex align="center" gap="2">
-        
-        {/* Icon */}
-        
-
-        {/* Text */}
-        <span className="tracking-wide">
-          <LogoutButton />
-        </span>
-      </Flex>
-    </h1>
+    <LogoutButton/>
 
   </div>
 )}
