@@ -76,7 +76,7 @@ export default function Header() {
     </div>
 
     {/* Logout Button */}
-    <Button
+    <h1
       size="3"
       radius="full"
       className="group cursor-pointer overflow-hidden rounded-3xl border border-red-200 bg-gradient-to-r from-red-500 to-rose-500 px-5 py-3 font-semibold text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl"
@@ -91,7 +91,7 @@ export default function Header() {
           <LogoutButton />
         </span>
       </Flex>
-    </Button>
+    </h1>
 
   </div>
 )}

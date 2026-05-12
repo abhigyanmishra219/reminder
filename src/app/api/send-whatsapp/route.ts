@@ -33,9 +33,9 @@ export async function POST(req: NextRequest) {
               messaging_product: "whatsapp",
               type: "template",
               template: {
-                name: "meeting_tem",
+                name: "meeting_reminder",
                 language: {
-                  code: "en",
+                  code: "En",
                   policy: "deterministic"
                 },
                 namespace: "610ca09d_29b3_4193_8bab_18e0fab26f",
