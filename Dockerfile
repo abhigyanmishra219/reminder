@@ -1,45 +1,24 @@
-# Stage 1: Build Stage
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install all dependencies (including dev dependencies for build)
+# Install dependencies
 RUN npm ci
 
-# Copy source code
+# Copy all files including .env
 COPY . .
 
-# Build the Next.js app
+# Build the app
 RUN npm run build
 
-# Stage 2: Production Stage (Lightweight)
-FROM node:20-alpine AS runner
+# Remove dev dependencies
+RUN npm prune --production
 
-WORKDIR /app
-
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy necessary files from builder
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Copy .env file (if you want to use it)
-COPY --from=builder /app/.env.local ./
-
-USER nextjs
-
+# Expose port
 EXPOSE 3000
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["node", "server.js"]
+# Start the app
+CMD ["npm", "start"]

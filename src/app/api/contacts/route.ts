@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, getTokenFromHeader } from '@/services/jwt';
 import connectDB from '../../../../lib/mongodb';
 import User from '../../../../models/User';
-import Contact from '../../../../models/Contact'
+import Contact from '../../../../models/Contact';
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,6 +20,13 @@ export async function GET(req: NextRequest) {
     let excelContacts: any[] = [];
     let googleContacts: any[] = [];
 
+    const { searchParams } = new URL(req.url);
+    const uploadId = searchParams.get('uploadId');
+
+    // Today's date (always applied)
+    const today = new Date();
+    const todayStr = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+
     // === GOOGLE SHEET MODE ===
     if (user?.sheetId) {
       try {
@@ -28,52 +35,55 @@ export async function GET(req: NextRequest) {
         const json = JSON.parse(text.substring(47).slice(0, -2));
 
         const rows = json.table.rows.map((row: any) => {
+          let name = "Unknown";
+          let phone = "";
           let dateStr = "";
           let timeStr = "";
 
-          // Improved Date Parsing
-          if (row.c?.[3]) {
-            if (row.c[3].f) dateStr = row.c[3].f;                    // Formatted date (best)
-            else if (typeof row.c[3].v === 'string') dateStr = row.c[3].v;
-            else if (row.c[3].v) dateStr = String(row.c[3].v);
-          }
+          row.c?.forEach((cell: any) => {
+            if (!cell) return;
+            const value = String(cell.v || cell.f || "").trim();
+            const lower = value.toLowerCase();
 
-          // Improved Time Parsing
-          if (row.c?.[2]) {
-            if (row.c[2].f) timeStr = row.c[2].f;
-            else if (typeof row.c[2].v === 'number') {
-              const fraction = row.c[2].v;
-              const hours = Math.floor(fraction * 24);
-              const minutes = Math.round((fraction * 24 - hours) * 60);
-              timeStr = `${hours}:${minutes.toString().padStart(2, '0')}`;
-            } else {
-              timeStr = String(row.c[2].v || "");
+            if (lower.includes("name") || lower.includes("person")) name = value;
+            else if (lower.includes("phone") || lower.includes("mobile") || lower.includes("contact") || lower.includes("number")) {
+              phone = value.replace(/[^0-9]/g, "");
             }
-          }
+            else if (lower.includes("date") || lower.includes("meeting") || lower.includes("schedule")) {
+              dateStr = cell.f || value;
+            }
+            else if (lower.includes("time") || lower.includes("hour")) {
+              timeStr = cell.f || value;
+            }
+          });
 
           return {
             _id: "gs-" + Math.random().toString(36).substr(2, 9),
-            name: row.c?.[0]?.v || "Unknown",
-            phone: String(row.c?.[1]?.v || "").replace(/[^0-9]/g, ""),
+            name,
+            phone,
             date: dateStr,
             time: timeStr,
           };
         });
 
-        googleContacts = rows;
+        // Filter today's meetings for Google Sheet
+        googleContacts = rows.filter(row => row.date === todayStr);
       } catch (e) {
         console.error("Google Sheet Error:", e);
       }
     }
 
-    // === EXCEL MODE ===
-    const today = new Date();
-    const todayStr = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
-
-    const dbContacts = await Contact.find({
+    // === EXCEL MODE (MongoDB) ===
+    const query: any = { 
       userId: userData.id,
-      date: todayStr
-    });
+      date: todayStr   // ← Always filter by today's date
+    };
+
+    if (uploadId) {
+      query.uploadId = uploadId;   // Filter by selected upload
+    }
+
+    const dbContacts = await Contact.find(query).sort({ createdAt: -1 });
 
     excelContacts = dbContacts.map((c: any) => ({
       ...c.toObject(),
@@ -84,7 +94,8 @@ export async function GET(req: NextRequest) {
       success: true, 
       excelContacts,
       googleContacts,
-      total: excelContacts.length + googleContacts.length
+      total: excelContacts.length + googleContacts.length,
+      selectedUploadId: uploadId
     });
 
   } catch (error: any) {

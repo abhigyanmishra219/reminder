@@ -24,6 +24,11 @@ export async function POST(req: NextRequest) {
 
     console.log("📊 Raw Excel Data:", jsonData);
 
+    // ================= NEW CODE ADDED HERE =================
+    const uploadId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+    const uploadName = `Upload ${new Date().toLocaleString()}`;
+    // =======================================================
+
     const contactsToSave = jsonData.map((row: any) => {
       let rawDate = row.Date || row.date || "";
 
@@ -52,6 +57,8 @@ export async function POST(req: NextRequest) {
 
       return {
         userId: user.id,
+        uploadId,           // ← Added
+        uploadName,         // ← Added
         name: String(row.Name || row.name || "Unknown").trim(),
         phone: String(row.Phone || row.phone || "").replace(/[^0-9]/g, '').trim(),
         date: formattedDate,

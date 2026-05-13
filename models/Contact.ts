@@ -6,6 +6,20 @@ const ContactSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+
+  // === New Fields for Sidebar Upload Grouping ===
+  uploadId: {
+    type: String,
+    required: true,
+    index: true,           // Important for fast filtering
+  },
+  uploadName: {
+    type: String,
+    default: 'Excel Upload',
+    trim: true,
+  },
+
+  // Existing Fields
   name: {
     type: String,
     required: true,
@@ -18,8 +32,7 @@ const ContactSchema = new mongoose.Schema({
   },
   date: {
     type: String,
-    required: true,
-    // We will store as DD-MM-YYYY
+    required: true,        // Format: DD-MM-YYYY
   },
   time: {
     type: String,
@@ -29,16 +42,15 @@ const ContactSchema = new mongoose.Schema({
     enum: ['pending', 'sent', 'failed'],
     default: 'pending',
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
   sentAt: {
     type: Date,
   },
+}, {
+  timestamps: true,        // Automatically adds createdAt & updatedAt
 });
 
-// Index for better performance
+// Compound Index for better query performance
+ContactSchema.index({ userId: 1, uploadId: 1 });
 ContactSchema.index({ userId: 1, date: 1 });
 
 const Contact = mongoose.models.Contact || mongoose.model('Contact', ContactSchema);

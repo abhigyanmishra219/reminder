@@ -8,9 +8,8 @@ export async function POST(req: NextRequest) {
     const user = verifyToken(token || '');
 
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const { contacts } = await req.json();
-
+    const { contacts, templateName = "testing_temp" } = await req.json();   
+    
     if (!contacts?.length) {
       return NextResponse.json({ error: "No contacts provided" }, { status: 400 });
     }
@@ -20,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     for (const contact of contacts) {
       try {
-        const response = await fetch('https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/', {
+        const response = await fetch('https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -31,25 +30,21 @@ export async function POST(req: NextRequest) {
             content_type: "template",
             payload: {
               messaging_product: "whatsapp",
-              type: "template",
+              type:"template",
+              to: contact.phone,
               template: {
-                name: "meeting_reminder",
+                name: templateName,
                 language: {
-                  code: "En",
+                  code: "en",
                   policy: "deterministic"
                 },
-                namespace: "610ca09d_29b3_4193_8bab_18e0fab26f",
-                to_and_components: [
+                components: [
                   {
-                    to: [contact.phone],
-                    components: {
-                      body_1: {
-                        parameters: [
-                          { type: "text", text: contact.name || "User" },
-                          { type: "text", text: contact.time || "soon" }
-                        ]
-                      }
-                    }
+                    type: "body",
+                    parameters: [
+                      { type: "text", text: contact.name || "User" },     // {{1}}
+                      { type: "text", text: contact.time || "soon" }      // {{2}}
+                    ]
                   }
                 ]
               }

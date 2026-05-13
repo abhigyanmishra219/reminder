@@ -5,7 +5,8 @@ interface ConfirmationModalProps {
   onClose: () => void;
   onConfirm: () => void;
   count: number;
-  messageTemplate: string;
+  messageTemplate?: string;
+  templateName?: string;
 }
 
 export default function ConfirmationModal({
@@ -13,13 +14,20 @@ export default function ConfirmationModal({
   onClose,
   onConfirm,
   count,
-  messageTemplate,
+  messageTemplate = "",
+  templateName = "meeting_reminder",   // Default fallback
 }: ConfirmationModalProps) {
   if (!isOpen) return null;
+
+  // Use selected template if available, otherwise fallback
+  const activeTemplate = templateName && templateName.trim() !== "" 
+    ? templateName 
+    : "meeting_reminder";
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4">
       <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+        
         {/* Header */}
         <div className="bg-red-50 px-8 py-6 border-b">
           <h2 className="text-2xl font-bold text-red-700">⚠️ Confirm Sending Messages</h2>
@@ -34,16 +42,23 @@ export default function ConfirmationModal({
             </p>
           </div>
 
-          <div>
-            <p className="text-sm font-medium text-gray-600 mb-2">Message Preview:</p>
-            <div className="bg-gray-100 p-4 rounded-2xl text-sm italic border">
-              {messageTemplate}
-            </div>
+          {/* Template Info */}
+          <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100">
+            <p className="text-sm text-blue-600 mb-1">Using Template:</p>
+            <p className="font-semibold text-blue-800 text-lg">{activeTemplate}</p>
           </div>
 
-          <div className="text-xs text-gray-500 bg-yellow-50 p-3 rounded-xl">
-            📌 Messages will be sent using Twilio Sandbox. Only numbers joined in sandbox will receive them.
-          </div>
+          {/* Message Preview */}
+          {messageTemplate && (
+            <div className="bg-gray-50 p-5 rounded-2xl">
+              <p className="text-sm text-gray-500 mb-2">Message Preview:</p>
+              <p className="text-sm leading-relaxed text-gray-700 italic">
+                "{messageTemplate.length > 120 
+                  ? messageTemplate.substring(0, 120) + "..." 
+                  : messageTemplate}"
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Buttons */}
